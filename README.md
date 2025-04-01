@@ -4,74 +4,25 @@ A specialized tool for managing OBS WebSocket connections with enhanced features
 
 ## Features
 
-| Feature | OBS Connection Editor | Visual Studio Code |
-|---------|----------------------|-------------------|
-| **Preventing Accidental Deletion** | Guards against accidental deletion of important syntax elements in Svelte files (e.g., colons, curly braces) | No specific protection for Svelte syntax errors |
-| **Auto-Refresh** | Built-in Grafana-style auto-refresh (5s to 1h intervals) that only updates changed data | Requires manual refresh or additional extensions |
-| **Connection Sorting** | Native sorting by category, name, and address | Requires custom extensions or manual sorting |
-| **Visual Editing** | Purpose-built UI for connection management | Text-based editing requiring knowledge of syntax |
-| **Multi-Client Support** | All connected clients stay in sync | Requires additional tooling for multi-user editing |
-| **HTTPS Support** | Built-in secure context for File System Access API | Requires manual HTTPS setup |
-| **Error Prevention** | Form-based editing prevents syntax errors | Prone to syntax errors when editing directly |
-| **Connection Visibility Control** | Toggle connections on/off with a single click | Requires manual editing of boolean values |
-| **Syntax Highlighting** | Contextual editing without need for syntax highlighting | Relies on syntax highlighting for readability |
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js (version 18 or higher)
-- NPM (version 9 or higher)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/obs-connection-editor.git
-
-# Navigate to the project directory
-cd obs-connection-editor
-
-# Install dependencies
-npm install
-
-# Run the development server (with HTTPS for File System Access API)
-npm run dev:https
-```
-
-### Build for Production
-
-```bash
-# Create a production build
-npm run build
-
-# Start the production server
-npm run start:https
-```
-
-## Usage
-
-1. Access the application at `https://localhost:3001` or your local IP with the same port
-2. Load your OBS connection file
-3. Edit connections using the intuitive interface
-4. Save changes back to the file
-5. Use the auto-refresh feature to keep multiple clients in sync
-
-## Technologies
-
-- Next.js 15
-- React 19
-- Tailwind CSS
-- HTTPS-localhost for secure context
+| Feature | Description |
+|---------|-------------|
+| **Visual Editing** | Purpose-built UI for connection management |
+| **Auto-Refresh** | Built-in Grafana-style auto-refresh (5s to 1h intervals) that only updates changed data |
+| **Preventing Syntax Errors** | Guards against accidental deletion of important syntax elements in Svelte files |
+| **Connection Sorting** | Native filtering and sorting by category, name, and address |
+| **Multi-Client Support** | All connected clients stay in sync |
+| **Connection Visibility Control** | Toggle connections on/off with a single click |
+| **Clean Interface** | Modern, responsive UI with straightforward controls |
+| **Secure Data Handling** | Built-in secure context for data integrity |
 
 ## 🚀 Getting Started
 
-These instructions will help you set up the project on your local machine. Don't worry if you're new to this - we'll guide you through each step!
+These instructions will help you set up the project on your local machine.
 
 ### 📋 Prerequisites
 
-Before you begin, make sure you have the following installed on your computer:
-- [Node.js](https://nodejs.org/) (version 16 or higher)
+Before you begin, make sure you have the following installed:
+- [Node.js](https://nodejs.org/) (version 18 or higher)
 - [npm](https://www.npmjs.com/) (comes with Node.js)
 - A Samba share with OBS configuration files
 
@@ -79,16 +30,14 @@ Before you begin, make sure you have the following installed on your computer:
 
 1. **Download the Project**
    ```bash
-   # Clone this repository or download and extract the ZIP file
-   git clone [repository-url]
+   # Clone this repository
+   git clone https://github.com/yourusername/obs-connection-editor.git
    # Go into the project folder
-   cd OBSConnectionEditor-main
+   cd obs-connection-editor
    ```
 
 2. **Install Dependencies**
    ```bash
-   # Install all required packages
-   # We use --legacy-peer-deps to ensure compatibility
    npm install --legacy-peer-deps
    ```
 
@@ -104,6 +53,16 @@ Before you begin, make sure you have the following installed on your computer:
    - If you see a security warning, this is normal because we're using a self-signed certificate for development
    - Click "Advanced" and then "Proceed to localhost (unsafe)" to continue
 
+### 🏗️ Build for Production
+
+```bash
+# Create a production build
+npm run build
+
+# Start the production server
+npm run start:https
+```
+
 ### 🛠️ Configuration
 
 The application expects a Samba share with OBS configuration files. By default, it connects to:
@@ -115,15 +74,21 @@ If you need to use different Samba share settings, you'll need to modify the con
 - `app/api/read-file/route.ts`
 - `app/api/save-file/route.ts`
 
-### 💡 Usage
+## 💡 Usage
 
-1. The main page shows all your OBS connections
-2. Click "Edit" on any connection to modify its settings
-3. Update the connection details in the form
-4. Click "Update" to save your changes
-5. The changes will be automatically saved to your OBS configuration
+1. Access the application at `https://localhost:3001` or your local IP with the same port
+2. The application automatically loads your OBS connection file on startup
+3. Manage connections using the intuitive interface:
+   - Search for connections using the search box
+   - Filter connections by category
+   - Click "Edit" on any connection to modify its settings
+   - Use the X button to close the edit panel when done
+   - Toggle visibility with one click
+   - Click "Update" to save your changes
+4. Use the auto-refresh feature to keep multiple clients in sync (adjustable from 5s to 1h)
+5. Changes are automatically saved to your OBS configuration
 
-### ⚠️ Troubleshooting
+## ⚠️ Troubleshooting
 
 1. **Installation Errors**
    - If you see any errors during `npm install`, try using:
@@ -139,12 +104,13 @@ If you need to use different Samba share settings, you'll need to modify the con
    - Verify that your Samba share is accessible
    - Check that you have write permissions on the share
 
-### 🤝 Need Help?
+## 🔧 Technologies
 
-If you run into any issues or need help, please:
-1. Check the troubleshooting section above
-2. Create an issue in the GitHub repository
-3. Provide details about your problem and any error messages you see
+- Next.js 15
+- React 19
+- Tailwind CSS
+- Shadcn UI Components
+- Lucide Icons
 
 ## 📝 License
 
