@@ -1,6 +1,68 @@
 # OBS Connection Editor
 
-A user-friendly tool to manage OBS connections through a web interface. This tool allows you to view, edit, and manage your OBS connections easily.
+A specialized tool for managing OBS WebSocket connections with enhanced features for safer editing and better user experience.
+
+## Features
+
+| Feature | OBS Connection Editor | Visual Studio Code |
+|---------|----------------------|-------------------|
+| **Preventing Accidental Deletion** | Guards against accidental deletion of important syntax elements in Svelte files (e.g., colons, curly braces) | No specific protection for Svelte syntax errors |
+| **Auto-Refresh** | Built-in Grafana-style auto-refresh (5s to 1h intervals) that only updates changed data | Requires manual refresh or additional extensions |
+| **Connection Sorting** | Native sorting by category, name, and address | Requires custom extensions or manual sorting |
+| **Visual Editing** | Purpose-built UI for connection management | Text-based editing requiring knowledge of syntax |
+| **Multi-Client Support** | All connected clients stay in sync | Requires additional tooling for multi-user editing |
+| **HTTPS Support** | Built-in secure context for File System Access API | Requires manual HTTPS setup |
+| **Error Prevention** | Form-based editing prevents syntax errors | Prone to syntax errors when editing directly |
+| **Connection Visibility Control** | Toggle connections on/off with a single click | Requires manual editing of boolean values |
+| **Syntax Highlighting** | Contextual editing without need for syntax highlighting | Relies on syntax highlighting for readability |
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (version 18 or higher)
+- NPM (version 9 or higher)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/obs-connection-editor.git
+
+# Navigate to the project directory
+cd obs-connection-editor
+
+# Install dependencies
+npm install
+
+# Run the development server (with HTTPS for File System Access API)
+npm run dev:https
+```
+
+### Build for Production
+
+```bash
+# Create a production build
+npm run build
+
+# Start the production server
+npm run start:https
+```
+
+## Usage
+
+1. Access the application at `https://localhost:3001` or your local IP with the same port
+2. Load your OBS connection file
+3. Edit connections using the intuitive interface
+4. Save changes back to the file
+5. Use the auto-refresh feature to keep multiple clients in sync
+
+## Technologies
+
+- Next.js 15
+- React 19
+- Tailwind CSS
+- HTTPS-localhost for secure context
 
 ## 🚀 Getting Started
 
@@ -86,4 +148,4 @@ If you run into any issues or need help, please:
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
