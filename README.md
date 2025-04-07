@@ -19,6 +19,7 @@ A modern, user-friendly web application for managing OBS connection files. Built
 
 - Node.js 18.0.0 or higher
 - npm 9.0.0 or higher
+- smbclient (for SMB share access)
 
 ### Installation
 
@@ -31,6 +32,11 @@ cd OBS-Connection-Editor
 2. Install dependencies:
 ```bash
 npm install
+```
+
+If you encounter dependency conflicts, try using legacy peer dependencies:
+```bash
+npm install --legacy-peer-deps
 ```
 
 3. Start the development server:
@@ -53,6 +59,34 @@ The application will be available at `https://localhost:3001` or your local IP a
 3. Click on a connection to edit its properties
 4. Use the "X" button to close the edit panel
 5. Changes are saved automatically when you modify a connection
+
+## SMB Configuration
+
+By default, the application connects to an SMB share to read and write the OBS connection file:
+
+- SMB Share: `//192.168.40.145/OBS Multi`
+- Path: `src/App.svelte`
+- Username: `guest` (no password)
+
+### Changing SMB Settings
+
+If you need to use a different SMB share, IP address, or folder path, you must modify the following files:
+
+1. `app/api/read-file/route.ts` - For reading the connection file
+2. `app/api/save-file/route.ts` - For saving changes to the connection file
+
+Example of what to change in both files:
+```typescript
+// Change this line in read-file/route.ts
+const { stdout } = await execAsync(
+  `smbclient "//YOUR-IP-ADDRESS/YOUR-SHARE-NAME" -U YOUR-USERNAME%YOUR-PASSWORD -c "get YOUR-PATH/App.svelte -"`
+)
+
+// Change this line in save-file/route.ts
+await execAsync(
+  `smbclient "//YOUR-IP-ADDRESS/YOUR-SHARE-NAME" -U YOUR-USERNAME%YOUR-PASSWORD -c "put ${tempFile} YOUR-PATH/App.svelte"`
+)
+```
 
 ## Technology Stack
 
@@ -78,6 +112,12 @@ The application will be available at `https://localhost:3001` or your local IP a
 - `/components` - React components
 - `/lib` - Utility functions and types
 - `/public` - Static assets including the Vidio logo
+
+## Troubleshooting
+
+- **Installation Issues**: If you encounter errors during installation, try using `npm install --legacy-peer-deps`
+- **Cannot Access Application**: Ensure you're using `https://` not `http://` in your browser
+- **SMB Connection Errors**: Verify that your SMB share is accessible and that you have the correct credentials
 
 ## License
 
