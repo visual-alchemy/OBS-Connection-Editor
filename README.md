@@ -1,117 +1,84 @@
 # OBS Connection Editor
 
-A specialized tool for managing OBS WebSocket connections with enhanced features for safer editing and better user experience.
+A modern, user-friendly web application for managing OBS connection files. Built with Next.js and TypeScript, featuring a clean, intuitive interface and real-time updates.
 
 ## Features
 
 | Feature | Description |
 |---------|-------------|
-| **Visual Editing** | Purpose-built UI for connection management |
-| **Auto-Refresh** | Built-in Grafana-style auto-refresh (5s to 1h intervals) that only updates changed data |
-| **Preventing Syntax Errors** | Guards against accidental deletion of important syntax elements in Svelte files |
-| **Connection Sorting** | Native filtering and sorting by category, name, and address |
-| **Multi-Client Support** | All connected clients stay in sync |
-| **Connection Visibility Control** | Toggle connections on/off with a single click |
-| **Clean Interface** | Modern, responsive UI with straightforward controls |
-| **Secure Data Handling** | Built-in secure context for data integrity |
+| Visual Editing | Edit OBS connection files through a user-friendly interface |
+| Auto-Refresh | Automatically loads and refreshes connection data |
+| Secure Data Handling | Local file system operations with HTTPS support |
+| Responsive Design | Works on desktop and mobile devices |
+| Modern UI | Built with Shadcn UI Components and Lucide Icons |
+| Real-time Updates | Changes are saved automatically to the connection file |
 
-## 🚀 Getting Started
+## Getting Started
 
-These instructions will help you set up the project on your local machine.
+### Prerequisites
 
-### 📋 Prerequisites
+- Node.js 18.0.0 or higher
+- npm 9.0.0 or higher
 
-Before you begin, make sure you have the following installed:
-- [Node.js](https://nodejs.org/) (version 18 or higher)
-- [npm](https://www.npmjs.com/) (comes with Node.js)
-- A Samba share with OBS configuration files
+### Installation
 
-### 🔧 Installation Steps
-
-1. **Download the Project**
-   ```bash
-   # Clone this repository
-   git clone https://github.com/yourusername/obs-connection-editor.git
-   # Go into the project folder
-   cd obs-connection-editor
-   ```
-
-2. **Install Dependencies**
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-
-3. **Start the Development Server**
-   ```bash
-   # Run the development server with HTTPS (required for file access)
-   npm run dev:https
-   ```
-
-4. **Access the Application**
-   - Open your web browser
-   - Go to `https://localhost:3001`
-   - If you see a security warning, this is normal because we're using a self-signed certificate for development
-   - Click "Advanced" and then "Proceed to localhost (unsafe)" to continue
-
-### 🏗️ Build for Production
-
+1. Clone the repository:
 ```bash
-# Create a production build
-npm run build
+git clone https://github.com/yourusername/OBS-Connection-Editor.git
+cd OBS-Connection-Editor
+```
 
-# Start the production server
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+4. For production with HTTPS:
+```bash
+npm run build
 npm run start:https
 ```
 
-### 🛠️ Configuration
+The application will be available at `https://localhost:3001` or your local IP address.
 
-The application expects a Samba share with OBS configuration files. By default, it connects to:
-- Share: `//192.168.40.145/OBS Multi`
-- Username: `guest`
-- No password required
+## Usage
 
-If you need to use different Samba share settings, you'll need to modify the connection details in:
-- `app/api/read-file/route.ts`
-- `app/api/save-file/route.ts`
+1. The application automatically loads the connection file on startup
+2. Use the search and filter functionality to find specific connections
+3. Click on a connection to edit its properties
+4. Use the "X" button to close the edit panel
+5. Changes are saved automatically when you modify a connection
 
-## 💡 Usage
+## Technology Stack
 
-1. Access the application at `https://localhost:3001` or your local IP with the same port
-2. The application automatically loads your OBS connection file on startup
-3. Manage connections using the intuitive interface:
-   - Search for connections using the search box
-   - Filter connections by category
-   - Click "Edit" on any connection to modify its settings
-   - Use the X button to close the edit panel when done
-   - Toggle visibility with one click
-   - Click "Update" to save your changes
-4. Use the auto-refresh feature to keep multiple clients in sync (adjustable from 5s to 1h)
-5. Changes are automatically saved to your OBS configuration
+- **Framework**: Next.js 15.1.0
+- **Language**: TypeScript
+- **UI Components**: Shadcn UI
+- **Icons**: Lucide Icons
+- **Styling**: Tailwind CSS
 
-## ⚠️ Troubleshooting
+## Development
 
-1. **Installation Errors**
-   - If you see any errors during `npm install`, try using:
-     ```bash
-     npm install --legacy-peer-deps
-     ```
+### Available Scripts
 
-2. **Cannot Access the Website**
-   - Make sure you're using `https://` not `http://`
-   - Try accessing through `https://localhost:3001`
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run start:https` - Start production server with HTTPS
+- `npm run lint` - Run ESLint
 
-3. **Cannot Save Changes**
-   - Verify that your Samba share is accessible
-   - Check that you have write permissions on the share
+### File Structure
 
-## 🔧 Technologies
+- `/app` - Next.js app router pages and API routes
+- `/components` - React components
+- `/lib` - Utility functions and types
+- `/public` - Static assets including the Vidio logo
 
-- Next.js 15
-- React 19
-- Tailwind CSS
-- Shadcn UI Components
-- Lucide Icons
+## License
 
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details. 
