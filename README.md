@@ -1,123 +1,99 @@
 # OBS Connection Editor
 
-A modern, user-friendly web application for managing OBS connection files. Built with Next.js and TypeScript, featuring a clean, intuitive interface and real-time updates.
+A web-based tool for managing OBS connections, built with Next.js.
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| Visual Editing | Edit OBS connection files through a user-friendly interface |
-| Auto-Refresh | Automatically loads and refreshes connection data |
-| Secure Data Handling | Local file system operations with HTTPS support |
-| Responsive Design | Works on desktop and mobile devices |
-| Modern UI | Built with Shadcn UI Components and Lucide Icons |
-| Real-time Updates | Changes are saved automatically to the connection file |
+- **SMB Integration**: Directly loads and saves files from `smb://192.168.40.145/OBS Multi/src/App.svelte`
+- **Real-time Updates**: Webhook system that shows real-time changes to Svelte files
+- **Connection Management**: Add, edit, delete, and toggle visibility of OBS connections
+- **Filtering & Search**: Filter connections by category and search by name or address
 
-## Getting Started
+## Technical Details
 
-### Prerequisites
+- **Server Port**: Runs on port 3001 by default
+- **Real-time Updates**: Combines Server-Sent Events (SSE) for push notifications with regular polling
+- **Secure Context**: Runs in HTTPS mode for better browser compatibility
 
-- Node.js 18.0.0 or higher
-- npm 9.0.0 or higher
-- smbclient (for SMB share access)
+## Installation
 
-### Installation
+This repository has been optimized for GitHub upload by excluding npm dependencies. You'll need to install them after cloning:
 
-1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/OBS-Connection-Editor.git
+# Clone the repository
+git clone https://github.com/your-username/OBS-Connection-Editor.git
 cd OBS-Connection-Editor
-```
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-If you encounter dependency conflicts, try using legacy peer dependencies:
-```bash
+# Install all dependencies (use --legacy-peer-deps to handle peer dependency conflicts)
 npm install --legacy-peer-deps
 ```
 
-3. Start the development server:
+### Potential Installation Issues
+
+If you encounter dependency installation errors, try installing problematic packages individually:
+
 ```bash
-npm run dev
+# For SMB file access
+npm install @marsaud/smb2 --legacy-peer-deps
+
+# For WebSocket support
+npm install ws --legacy-peer-deps
+
+# For HTTPS local development
+npm install https-localhost --legacy-peer-deps
 ```
 
-4. For production with HTTPS:
+## Running the Application
+
+### Development Mode
+
 ```bash
+# Run the standard development server on port 3001
+npm run dev
+
+# Or run the development server with HTTPS support
+npm run dev:https
+```
+
+### Production Mode
+
+```bash
+# Build the application
 npm run build
+
+# Start the production server
+npm run start
+
+# Or start the production server with HTTPS
 npm run start:https
 ```
 
-The application will be available at `https://localhost:3001` or your local IP address.
+## Key Dependencies
 
-## Usage
+The application requires these dependencies (all installed automatically with npm install):
 
-1. The application automatically loads the connection file on startup
-2. Use the search and filter functionality to find specific connections
-3. Click on a connection to edit its properties
-4. Use the "X" button to close the edit panel
-5. Changes are saved automatically when you modify a connection
+- **Next.js 15.1.0**: Framework for server-rendered React applications
+- **React 19**: UI library
+- **@marsaud/smb2**: For SMB file system integration
+- **next-themes**: For theme management
+- **https-localhost**: For HTTPS support in local development
 
-## SMB Configuration
+## Implementation Notes
 
-By default, the application connects to an SMB share to read and write the OBS connection file:
+### SMB Integration
 
-- SMB Share: `//192.168.40.145/OBS Multi`
-- Path: `src/App.svelte`
-- Username: `guest` (no password)
+The application connects to an SMB share at `//192.168.40.145/OBS Multi` to read and write the `src/App.svelte` file.
 
-### Changing SMB Settings
+### Real-time Updates
 
-If you need to use a different SMB share, IP address, or folder path, you must modify the following files:
+The system uses two mechanisms for real-time updates:
 
-1. `app/api/read-file/route.ts` - For reading the connection file
-2. `app/api/save-file/route.ts` - For saving changes to the connection file
+1. **Webhook System**: A Server-Sent Events (SSE) endpoint at `/api/webhook` that clients connect to for receiving push notifications
+2. **Regular Polling**: A polling mechanism checks for file changes every 5 seconds by fetching `/api/poll-updates`
 
-Example of what to change in both files:
-```typescript
-// Change this line in read-file/route.ts
-const { stdout } = await execAsync(
-  `smbclient "//YOUR-IP-ADDRESS/YOUR-SHARE-NAME" -U YOUR-USERNAME%YOUR-PASSWORD -c "get YOUR-PATH/App.svelte -"`
-)
+### Security
 
-// Change this line in save-file/route.ts
-await execAsync(
-  `smbclient "//YOUR-IP-ADDRESS/YOUR-SHARE-NAME" -U YOUR-USERNAME%YOUR-PASSWORD -c "put ${tempFile} YOUR-PATH/App.svelte"`
-)
-```
-
-## Technology Stack
-
-- **Framework**: Next.js 15.1.0
-- **Language**: TypeScript
-- **UI Components**: Shadcn UI
-- **Icons**: Lucide Icons
-- **Styling**: Tailwind CSS
-
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run start:https` - Start production server with HTTPS
-- `npm run lint` - Run ESLint
-
-### File Structure
-
-- `/app` - Next.js app router pages and API routes
-- `/components` - React components
-- `/lib` - Utility functions and types
-- `/public` - Static assets including the Vidio logo
-
-## Troubleshooting
-
-- **Installation Issues**: If you encounter errors during installation, try using `npm install --legacy-peer-deps`
-- **Cannot Access Application**: Ensure you're using `https://` not `http://` in your browser
-- **SMB Connection Errors**: Verify that your SMB share is accessible and that you have the correct credentials
+For the File System Access API to work properly, the application runs in HTTPS mode using a local certificate.
 
 ## License
 

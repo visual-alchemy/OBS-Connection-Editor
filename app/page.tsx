@@ -1,16 +1,13 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AlertCircle, Save, Plus, Trash2, Info } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Check } from "lucide-react"
+import Image from "next/image"
 
 interface Connection {
   id?: string
@@ -18,20 +15,6 @@ interface Connection {
   address: string
   show: boolean
   name: string
-  additionalContent?: string
-}
-
-// Add interface type definitions for File System Access API
-interface FileSystemHandle {
-  kind: 'file' | 'directory';
-  name: string;
-  getFile: () => Promise<File>;
-  createWritable: () => Promise<FileSystemWritableFileStream>;
-}
-
-interface FileSystemWritableFileStream {
-  write: (data: string | ArrayBuffer | ArrayBufferView | Blob) => Promise<void>;
-  close: () => Promise<void>;
 }
 
 export default function Home() {
@@ -39,15 +22,10 @@ export default function Home() {
   const [filteredConnections, setFilteredConnections] = useState<Connection[]>([])
   const [filter, setFilter] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null)
   const [message, setMessage] = useState({ type: "", text: "" })
   const [isLoading, setIsLoading] = useState(false)
-  const [originalContent, setOriginalContent] = useState("")
-  const [originalFile, setOriginalFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [fileHandle, setFileHandle] = useState<FileSystemFileHandle | null>(null)
-  const [fsApiSupported, setFsApiSupported] = useState<boolean | null>(null)
-  const [isSecureContext, setIsSecureContext] = useState(false)
+  const [connectionCount, setConnectionCount] = useState(0)
+  const [selectedConnection, setSelectedConnection] = useState<Connection | null>(null)
 
   useEffect(() => {
     // Load the Samba file on component mount
@@ -73,30 +51,37 @@ export default function Home() {
     setFilteredConnections(filtered)
   }, [connections, filter, searchTerm])
 
-  // Add this useEffect hook after the other useEffect hooks
-  useEffect(() => {
-    // Check if File System Access API is supported
-    const isSupported = typeof window !== 'undefined' && 
-      'showSaveFilePicker' in window && 
-      'showOpenFilePicker' in window;
-    
-    setFsApiSupported(isSupported);
+  const parseConnectionsFromContent = (text: string) => {
+    // Extract the connections array from the Svelte file
+    const connectionsMatch = text.match(/let connections = \[([\s\S]*?)\];/)
 
-    // Check if we're in a secure context (HTTPS or localhost)
-    setIsSecureContext(typeof window !== 'undefined' && (window as any).isSecureContext);
+    if (connectionsMatch && connectionsMatch[1]) {
+      const connectionsText = connectionsMatch[1]
 
-    console.log(
-      isSupported
-        ? "File System Access API is supported in this browser!"
-        : "File System Access API is not supported in this browser.",
-    );
+      // Parse the connections array
+      const connectionItems: Connection[] = []
+      const regex = /{category:\s*['"]([^'"]*)['"]\s*,\s*address:\s*['"]([^'"]*)['"]\s*,\s*show:\s*([^,]*)\s*,\s*name:\s*['"]([^'"]*)['"]\s*([^}]*)}/g
 
-    console.log(
-      typeof window !== 'undefined' && (window as any).isSecureContext
-        ? "Running in a secure context (HTTPS or localhost)!"
-        : "Not running in a secure context. File System Access API requires HTTPS!",
-    );
-  }, []);
+      let match
+      let id = 1
+      while ((match = regex.exec(connectionsText)) !== null) {
+        connectionItems.push({
+          id: `conn_${id}`,
+          category: match[1],
+          address: match[2],
+          show: match[3] === "true",
+          name: match[4],
+        })
+        id++
+      }
+
+      setConnections(connectionItems)
+      setConnectionCount(connectionItems.length)
+      setMessage({ type: "success", text: `Updated with ${connectionItems.length} connections` })
+    } else {
+      setMessage({ type: "error", text: "Could not find connections array in the file" })
+    }
+  }
 
   const loadSambaFile = async () => {
     setIsLoading(true)
@@ -106,41 +91,11 @@ export default function Home() {
       
       if (data.error) {
         setMessage({ type: "error", text: data.error })
-          return
+        return
       }
 
       const text = data.content
-      setOriginalContent(text)
-
-      // Extract the connections array from the Svelte file
-      const connectionsMatch = text.match(/let connections = \[([\s\S]*?)\];/)
-
-      if (connectionsMatch && connectionsMatch[1]) {
-        const connectionsText = connectionsMatch[1]
-
-        // Parse the connections array
-        const connectionItems: Connection[] = []
-        const regex = /{category:\s*['"]([^'"]*)['"]\s*,\s*address:\s*['"]([^'"]*)['"]\s*,\s*show:\s*([^,]*)\s*,\s*name:\s*['"]([^'"]*)['"]\s*([^}]*)}/g
-
-        let match
-        let id = 1
-        while ((match = regex.exec(connectionsText)) !== null) {
-          connectionItems.push({
-            id: `conn_${id}`,
-            category: match[1],
-            address: match[2],
-            show: match[3] === "true",
-            name: match[4],
-            additionalContent: match[5] || ''
-          })
-          id++
-        }
-
-        setConnections(connectionItems)
-        setMessage({ type: "success", text: `Loaded ${connectionItems.length} connections from App.svelte` })
-      } else {
-        setMessage({ type: "error", text: "Could not find connections array in the file" })
-      }
+      parseConnectionsFromContent(text)
     } catch (error) {
       setMessage({ type: "error", text: "Error reading file: " + (error as Error).message })
     } finally {
@@ -148,419 +103,444 @@ export default function Home() {
     }
   }
 
-  const saveToFile = async () => {
+  const saveChanges = async () => {
     setIsLoading(true)
+    setMessage({ type: "info", text: "Saving changes..." })
     try {
-      // Build the new connections array by preserving structure and only updating changed properties
-      const contentLines = originalContent.split('\n')
-      const connectionsStartIndex = contentLines.findIndex(line => line.includes('let connections = ['))
-      const connectionsEndIndex = contentLines.findIndex((line, idx) => idx > connectionsStartIndex && line.includes('];'))
+      // Get the latest file content
+      console.log("Fetching latest file content...");
+      const response = await fetch('/api/read-file')
+      const data = await response.json()
+      
+      if (data.error) {
+        console.error("Error reading file:", data.error);
+        throw new Error(data.error)
+      }
+      
+      const content = data.content
+      console.log(`Received content (${content.length} chars)`);
+      
+      // Find the connections array in the content
+      const contentLines = content.split('\n')
+      const connectionsStartIndex = contentLines.findIndex((line: string) => line.includes('let connections = ['))
+      const connectionsEndIndex = contentLines.findIndex((line: string, idx: number) => idx > connectionsStartIndex && line.includes('];'))
+      
+      console.log(`Found connections array at lines ${connectionsStartIndex} to ${connectionsEndIndex}`);
       
       if (connectionsStartIndex === -1 || connectionsEndIndex === -1) {
-        throw new Error("Could not find the connections array boundaries in the file")
+        console.error("Could not find connections array in file content");
+        throw new Error("Could not find connections array in the file")
       }
       
-      // Create a map of connection lines by address and name for lookup
-      const connectionLineMap = new Map()
+      // Extract the connections section from the file
+      const connectionSection = contentLines.slice(connectionsStartIndex + 1, connectionsEndIndex)
+      console.log(`Extracted ${connectionSection.length} connection lines`);
       
-      // Process each line in the connections array
-      for (let i = connectionsStartIndex + 1; i < connectionsEndIndex; i++) {
-        const line = contentLines[i]
-        if (!line.includes('category:') || !line.includes('address:')) continue
-        
-        const addrMatch = line.match(/address:\s*['"]([^'"]*)['"]/)
-        const nameMatch = line.match(/name:\s*['"]([^'"]*)['"]/)
-        
-        if (addrMatch && nameMatch) {
-          const addr = addrMatch[1]
-          const name = nameMatch[1]
-          
-          connectionLineMap.set(`addr_${addr}`, i)
-          connectionLineMap.set(`name_${name}`, i)
-          connectionLineMap.set(`addr_name_${addr}_${name}`, i)
-        }
-      }
+      // Map to track which lines have been modified
+      const modifiedLines = new Map()
       
-      // Update existing connections in place
+      // For each connection in our React state
       connections.forEach(conn => {
-        const lineIdx = connectionLineMap.get(`addr_${conn.address}`) || 
-                       connectionLineMap.get(`name_${conn.name}`) || 
-                       connectionLineMap.get(`addr_name_${conn.address}_${conn.name}`)
+        // Try to find the corresponding connection line in the Svelte file
+        let lineIndex = -1;
+        let matchType = "none";
         
-        if (lineIdx !== undefined) {
-          const originalLine = contentLines[lineIdx]
-          let updatedLine = originalLine
+        // Look for matching name or address to identify the connection
+        for (let i = 0; i < connectionSection.length; i++) {
+          const line = connectionSection[i];
           
-          if (originalLine.includes(`category:`) && conn.category) {
-            updatedLine = updatedLine.replace(/category:\s*['"]([^'"]*)['"]/g, `category: '${conn.category}'`)
+          if (line.includes(`name: '${conn.name}'`)) {
+            lineIndex = i;
+            matchType = "name";
+            break;
           }
           
-          if (originalLine.includes(`address:`) && conn.address) {
-            updatedLine = updatedLine.replace(/address:\s*['"]([^'"]*)['"]/g, `address: '${conn.address}'`)
-          }
-          
-          if (originalLine.includes(`show:`)) {
-            updatedLine = updatedLine.replace(/show:\s*(true|false)/g, `show: ${conn.show}`)
-          }
-          
-          if (originalLine.includes(`name:`) && conn.name) {
-            updatedLine = updatedLine.replace(/name:\s*['"]([^'"]*)['"]/g, `name: '${conn.name}'`)
-          }
-          
-          if (updatedLine !== originalLine) {
-            contentLines[lineIdx] = updatedLine
+          if (line.includes(`address: '${conn.address}'`)) {
+            lineIndex = i;
+            matchType = "address";
+            break;
           }
         }
-      })
-
-      const updatedText = contentLines.join('\n')
-
-      // Save to Samba share
-      const response = await fetch('/api/save-file', {
+        
+        console.log(`Connection ${conn.name} (${conn.id}): found match=${matchType}, line=${lineIndex}`);
+        
+        if (lineIndex >= 0) {
+          let line = connectionSection[lineIndex];
+          let originalLine = line;
+          
+          // Update only the specific properties without changing the order
+          // This preserves the structure of each line
+          
+          // Update category if needed
+          if (line.includes('category:')) {
+            line = line.replace(/category:\s*['"]([^'"]*)['"]/g, `category: '${conn.category}'`);
+          }
+          
+          // Update address if needed
+          if (line.includes('address:')) {
+            line = line.replace(/address:\s*['"]([^'"]*)['"]/g, `address: '${conn.address}'`);
+          }
+          
+          // Update show if needed
+          if (line.includes('show:')) {
+            line = line.replace(/show:\s*(true|false)/g, `show: ${conn.show}`);
+          }
+          
+          // Update name if needed
+          if (line.includes('name:')) {
+            line = line.replace(/name:\s*['"]([^'"]*)['"]/g, `name: '${conn.name}'`);
+          }
+          
+          // Check if the line was actually modified
+          const wasModified = line !== originalLine;
+          console.log(`Line ${lineIndex} modified: ${wasModified}`);
+          
+          // Mark this line as modified
+          if (wasModified) {
+            modifiedLines.set(lineIndex, line);
+          }
+        }
+      });
+      
+      console.log(`Modified ${modifiedLines.size} lines`);
+      
+      // If no changes were made, alert the user
+      if (modifiedLines.size === 0) {
+        console.log("No changes detected to save");
+        setMessage({ type: "info", text: "No changes detected to save" })
+        setIsLoading(false)
+        return;
+      }
+      
+      // Apply the modifications while preserving the original structure
+      for (let [index, line] of modifiedLines.entries()) {
+        connectionSection[index] = line;
+      }
+      
+      // Put the modified connection section back into the content
+      contentLines.splice(
+        connectionsStartIndex + 1,
+        connectionsEndIndex - connectionsStartIndex - 1,
+        ...connectionSection
+      );
+      
+      const updatedContent = contentLines.join('\n')
+      console.log(`Updated content (${updatedContent.length} chars)`);
+      
+      // Verify changes
+      const originalConnLines = content.split('\n').slice(connectionsStartIndex, connectionsEndIndex + 1).join('\n');
+      const updatedConnLines = updatedContent.split('\n').slice(connectionsStartIndex, connectionsEndIndex + 1).join('\n');
+      
+      console.log("Diff of connection section:", originalConnLines !== updatedConnLines);
+      
+      console.log("Sending updated content to server...");
+      
+      // Save to SMB share
+      const saveResponse = await fetch('/api/save-file', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: updatedText
+          content: updatedContent
         }),
       })
-
-      const data = await response.json()
-      if (data.error) {
-        throw new Error(data.error)
+      
+      const saveData = await saveResponse.json()
+      console.log("Save response:", saveData);
+      
+      if (saveData.error) {
+        console.error("Error from save API:", saveData.error);
+        throw new Error(saveData.error)
       }
-
-      setMessage({ type: "success", text: "File saved successfully" })
+      
+      setMessage({ type: "success", text: "Changes saved successfully" })
     } catch (error) {
-      setMessage({ type: "error", text: "Error saving file: " + (error as Error).message })
+      console.error("Error in saveChanges:", error);
+      setMessage({ type: "error", text: "Error saving changes: " + (error as Error).message })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const addNewConnection = () => {
-    const newConnection: Connection = {
-      id: `conn_${connections.length + 1}`,
-      category: "primary",
-      address: "ws://192.168.0.1:4444",
-      show: true,
-      name: "New Connection",
-    }
-
-    setConnections([...connections, newConnection])
-    setSelectedConnection(newConnection)
-  }
-
   const updateConnection = (updatedConnection: Connection) => {
-    setConnections(connections.map((conn) => (conn.id === updatedConnection.id ? updatedConnection : conn)))
-    setSelectedConnection(updatedConnection)
-    setMessage({ type: "success", text: "Connection updated" })
+    setConnections(
+      connections.map((conn) => (conn.id === updatedConnection.id ? updatedConnection : conn))
+    )
+    setSelectedConnection(null)
   }
 
-  const deleteConnection = (id: string | undefined) => {
+  const toggleConnectionVisibility = (id: string | undefined) => {
     if (!id) return
-
-    setConnections(connections.filter((conn) => conn.id !== id))
-    if (selectedConnection?.id === id) {
-      setSelectedConnection(null)
-    }
-    setMessage({ type: "success", text: "Connection deleted" })
-  }
-
-  const toggleVisibility = (id: string | undefined) => {
-    if (!id) return
-
+    
     setConnections(
       connections.map((conn) => {
         if (conn.id === id) {
-          const updatedConn = { ...conn, show: !conn.show }
-          if (selectedConnection?.id === id) {
-            setSelectedConnection(updatedConn)
-          }
-          return updatedConn
+          return { ...conn, show: !conn.show }
         }
         return conn
-      }),
+      })
     )
   }
 
-  // Add keyboard shortcut for saving (Ctrl+S or Cmd+S)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault()
-        if (!isLoading && connections.length > 0) {
-          saveToFile()
-        }
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [connections, isLoading, originalFile, originalContent]) // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">OBS Connections Editor</h1>
-
-      {fsApiSupported !== null && (
-        <div
-          className={`mb-4 px-4 py-3 rounded-md text-sm ${fsApiSupported ? "bg-green-50 text-green-800 border border-green-200" : "bg-amber-50 text-amber-800 border border-amber-200"}`}
-        >
-          <p className="flex items-center">
-            {fsApiSupported ? (
-              <>
-                <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                <span className="font-medium">File System Access API is supported</span>
-                <span className="ml-1">- You can edit files directly without downloading.</span>
-              </>
-            ) : (
-              <>
-                <span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
-                <span className="font-medium">File System Access API is not supported</span>
-                <span className="ml-1">- Files will be downloaded instead of edited in place.</span>
-              </>
-            )}
-          </p>
-
-          {!isSecureContext && (
-            <div className="mt-2 flex items-start gap-2 text-red-700 bg-red-50 p-2 rounded border border-red-200">
-              <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <p>
-                <span className="font-medium">Not running in a secure context!</span> The File System Access API
-                requires HTTPS. Please access this page via HTTPS or localhost for full functionality.
-              </p>
+    <div className="bg-black text-white min-h-screen">
+      <div className="container mx-auto max-w-[1400px] px-4 py-4">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="mr-2">
+              <Image 
+                src="/Logo-Vidio-Apps.png" 
+                alt="Vidio Apps Logo" 
+                width={32} 
+                height={32} 
+              />
             </div>
-          )}
-        </div>
-      )}
-
-      {message.text && (
-        <Alert
-          className={`mb-4 ${message.type === "error" ? "bg-red-100 border-red-400" : "bg-green-100 border-green-400"}`}
-        >
-          <AlertCircle className={message.type === "error" ? "h-5 w-5 text-red-600" : "h-5 w-5 text-green-600"} />
-          <AlertTitle
-            className={
-              message.type === "error" ? "text-red-800 font-semibold text-lg" : "text-green-800 font-semibold text-lg"
-            }
-          >
-            {message.type === "error" ? "Error" : "Success"}
-          </AlertTitle>
-          <AlertDescription className={message.type === "error" ? "text-red-700" : "text-green-700"}>
-            {message.text}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Connection Operations</CardTitle>
-              <CardDescription>Manage your OBS connections</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button
-                className="w-full bg-green-600 hover:bg-green-700"
-                onClick={saveToFile}
-                disabled={connections.length === 0 || isLoading}
-              >
-                <Save className="mr-2 h-4 w-4" /> Save Changes
-              </Button>
-
-              <Button className="w-full" onClick={addNewConnection} disabled={isLoading}>
-                <Plus className="mr-2 h-4 w-4" /> Add New Connection
-              </Button>
-            </CardContent>
-          </Card>
-
-          {selectedConnection && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Edit Connection</CardTitle>
-                <CardDescription>Modify the selected connection</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={selectedConnection.name}
-                      onChange={(e) => setSelectedConnection({ ...selectedConnection, name: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={selectedConnection.address}
-                      onChange={(e) => setSelectedConnection({ ...selectedConnection, address: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Select
-                      value={selectedConnection.category}
-                      onValueChange={(value) => setSelectedConnection({ ...selectedConnection, category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="primary">Primary</SelectItem>
-                        <SelectItem value="backup">Backup</SelectItem>
-                        <SelectItem value="tv">TV</SelectItem>
-                        <SelectItem value="tv-backup">TV Backup</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Label htmlFor="show">Show</Label>
-                    <input
-                      id="show"
-                      type="checkbox"
-                      checked={selectedConnection.show}
-                      onChange={(e) => setSelectedConnection({ ...selectedConnection, show: e.target.checked })}
-                      className="h-4 w-4"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="destructive" onClick={() => deleteConnection(selectedConnection.id)}>
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                </Button>
-                <Button onClick={() => updateConnection(selectedConnection)}>
-                  <Save className="mr-2 h-4 w-4" /> Update
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-        </div>
-
-        <div className="md:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Connections ({filteredConnections.length})</CardTitle>
-              <CardDescription>Manage your OBS connections</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-4 mb-4">
-                <div className="flex-1">
-                  <Label htmlFor="search">Search</Label>
-                  <Input
-                    id="search"
-                    placeholder="Search by name or address"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-
+            <h1 className="text-2xl font-bold">OBS Connection Editor</h1>
+          </div>
+          <div className="flex items-center">
+            <div className="rounded-full bg-gray-900 px-4 py-1 flex items-center mr-4">
+              <span className="mr-2">Connected</span>
+              <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+            </div>
+            {message.type === "success" && (
+              <div className="bg-green-950/30 text-green-400 border border-green-600/20 rounded-md px-4 py-2 flex items-center">
+                <Check className="w-5 h-5 mr-2 text-green-500" />
                 <div>
-                  <Label htmlFor="filter">Filter by Category</Label>
-                  <Select value={filter} onValueChange={setFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filter by category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      <SelectItem value="primary">Primary</SelectItem>
-                      <SelectItem value="backup">Backup</SelectItem>
-                      <SelectItem value="tv">TV</SelectItem>
-                      <SelectItem value="tv-backup">TV Backup</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="font-medium">Success</div>
+                  <div className="text-sm">{message.text}</div>
                 </div>
               </div>
+            )}
+            {message.type === "error" && (
+              <div className="bg-red-950/30 text-red-400 border border-red-600/20 rounded-md px-4 py-2 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div>
+                  <div className="font-medium">Error</div>
+                  <div className="text-sm">{message.text}</div>
+                </div>
+              </div>
+            )}
+            {message.type === "info" && (
+              <div className="bg-blue-950/30 text-blue-400 border border-blue-600/20 rounded-md px-4 py-2 flex items-center">
+                <svg className="w-5 h-5 mr-2 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <div>
+                  <div className="font-medium">Info</div>
+                  <div className="text-sm">{message.text}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
-              <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Address</TableHead>
-                      <TableHead>Show</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredConnections.length > 0 ? (
-                      filteredConnections.map((conn) => (
-                        <TableRow key={conn.id} className={selectedConnection?.id === conn.id ? "bg-muted" : ""}>
-                          <TableCell className="font-medium">{conn.name}</TableCell>
-                          <TableCell>{conn.category}</TableCell>
-                          <TableCell className="font-mono text-sm">{conn.address}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => toggleVisibility(conn.id)}>
-                              {conn.show ? "true" : "false"}
-                            </Button>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => setSelectedConnection(conn)}>
-                              Edit
-                            </Button>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Main content - Connections list */}
+          <div className="md:col-span-8">
+            <Card className="bg-black border border-gray-800 overflow-hidden rounded-xl">
+              <div className="p-6">
+                <h2 className="text-xl font-bold mb-1">Connections ({connectionCount})</h2>
+                <p className="text-gray-400 text-sm mb-5">Manage your OBS connections</p>
+                
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-full mr-4">
+                    <label className="block text-sm mb-2">Search</label>
+                    <Input 
+                      placeholder="Search by name or address" 
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-black border border-gray-800 text-white h-10"
+                    />
+                  </div>
+                  <div className="w-64">
+                    <label className="block text-sm mb-2">Filter by Category</label>
+                    <select 
+                      value={filter} 
+                      onChange={(e) => setFilter(e.target.value)}
+                      className="bg-black border border-gray-800 rounded-md p-2 text-white w-full h-10"
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="primary">Primary</option>
+                      <option value="backup">Backup</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="border border-gray-800 rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-gray-800 bg-gray-900/50">
+                        <TableHead className="text-gray-300 font-medium">Name</TableHead>
+                        <TableHead className="text-gray-300 font-medium">Category</TableHead>
+                        <TableHead className="text-gray-300 font-medium">Address</TableHead>
+                        <TableHead className="text-gray-300 font-medium">Show</TableHead>
+                        <TableHead className="text-gray-300 font-medium">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredConnections.length > 0 ? (
+                        filteredConnections.map((conn) => (
+                          <TableRow key={conn.id} className="border-gray-800 hover:bg-gray-900/30">
+                            <TableCell className="font-medium">{conn.name}</TableCell>
+                            <TableCell className="text-gray-300">{conn.category}</TableCell>
+                            <TableCell className="font-mono text-sm">{conn.address}</TableCell>
+                            <TableCell>
+                              <button 
+                                onClick={() => toggleConnectionVisibility(conn.id)}
+                                className="text-gray-300 hover:text-white"
+                              >
+                                {conn.show ? "true" : "false"}
+                              </button>
+                            </TableCell>
+                            <TableCell>
+                              <button 
+                                className="text-gray-300 hover:text-white"
+                                onClick={() => setSelectedConnection(conn)}
+                              >
+                                Edit
+                              </button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-6 text-gray-400">
+                            No connections match your filter criteria.
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-4">
-                          {connections.length === 0
-                            ? "No connections loaded. Please load a file."
-                            : "No connections match your filter criteria."}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </Card>
+          </div>
+
+          {/* Sidebar - Connection Operations */}
+          <div className="md:col-span-4">
+            <Card className="bg-black border border-gray-800 rounded-xl">
+              <div className="p-6">
+                <h2 className="text-xl font-bold mb-1">Connection Operations</h2>
+                <p className="text-gray-400 text-sm mb-5">Manage your OBS connections</p>
+                
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white mb-4 flex items-center justify-center h-10 rounded-md"
+                  onClick={saveChanges}
+                  disabled={isLoading}
+                >
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                  Save Changes
+                </Button>
+              </div>
+            </Card>
+
+            {selectedConnection && (
+              <Card className="bg-black border border-gray-800 mt-6 rounded-xl">
+                <div className="p-6 relative">
+                  <h2 className="text-xl font-bold mb-1">Edit Connection</h2>
+                  <p className="text-gray-400 text-sm mb-5">Modify the selected connection</p>
+                  
+                  <button 
+                    onClick={() => setSelectedConnection(null)}
+                    className="absolute top-6 right-6 text-gray-400 hover:text-white"
+                    aria-label="Close"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm mb-2">Name</label>
+                      <Input 
+                        value={selectedConnection.name}
+                        onChange={(e) => setSelectedConnection({...selectedConnection, name: e.target.value})}
+                        className="bg-black border border-gray-800 text-white h-10"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm mb-2">Address</label>
+                      <Input 
+                        value={selectedConnection.address}
+                        onChange={(e) => setSelectedConnection({...selectedConnection, address: e.target.value})}
+                        className="bg-black border border-gray-800 text-white h-10"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm mb-2">Category</label>
+                      <select 
+                        value={selectedConnection.category}
+                        onChange={(e) => setSelectedConnection({...selectedConnection, category: e.target.value})}
+                        className="bg-black border border-gray-800 rounded-md p-2 text-white w-full h-10"
+                      >
+                        <option value="primary">Primary</option>
+                        <option value="backup">Backup</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-center mt-2">
+                      <label className="block text-sm mr-2">Show:</label>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedConnection.show}
+                        onChange={(e) => setSelectedConnection({...selectedConnection, show: e.target.checked})}
+                        className="h-4 w-4"
+                      />
+                    </div>
+                    
+                    <div className="pt-4 flex justify-between mt-2">
+                      <Button
+                        onClick={() => {
+                          if (selectedConnection && selectedConnection.id) {
+                            setConnections(connections.filter(conn => conn.id !== selectedConnection.id))
+                            setSelectedConnection(null)
+                          }
+                        }}
+                        className="bg-red-700 hover:bg-red-800 h-10 rounded-md"
+                      >
+                        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete
+                      </Button>
+                      
+                      <Button
+                        onClick={() => updateConnection(selectedConnection)}
+                        className="bg-white hover:bg-gray-100 text-black h-10 rounded-md"
+                      >
+                        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                          <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Update
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>
   )
-}
-
-// Add a TypeScript declaration for the File System Access API
-declare global {
-  interface Window {
-    showOpenFilePicker?: (options?: {
-      types?: Array<{
-        description: string
-        accept: Record<string, string[]>
-      }>
-      multiple?: boolean
-    }) => Promise<FileSystemFileHandle[]>
-
-    showSaveFilePicker?: (options?: {
-      suggestedName?: string
-      types?: Array<{
-        description: string
-        accept: Record<string, string[]>
-      }>
-    }) => Promise<FileSystemFileHandle>
-
-    isSecureContext: boolean
-  }
-
-  interface FileSystemFileHandle {
-    getFile: () => Promise<File>
-    createWritable: () => Promise<FileSystemWritableFileStream>
-  }
-
-  interface FileSystemWritableFileStream {
-    write: (data: string | BufferSource | Blob) => Promise<void>
-    close: () => Promise<void>
-  }
 }
 

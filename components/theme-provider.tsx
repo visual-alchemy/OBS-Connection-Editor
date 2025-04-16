@@ -7,5 +7,17 @@ import {
 } from 'next-themes'
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+  return (
+    <>
+      <style jsx global>{`
+        :root {
+          color-scheme: light;
+        }
+        .dark {
+          color-scheme: dark;
+        }
+      `}</style>
+      <NextThemesProvider {...props}>{children}</NextThemesProvider>
+    </>
+  )
 }
