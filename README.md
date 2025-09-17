@@ -68,6 +68,21 @@ npm run start
 npm run start:https
 ```
 
+## Running with Docker
+
+To run this project using Docker, follow these steps:
+
+1. **Build the Docker image:**
+   ```bash
+   sudo docker build -t obs-connection-editor .
+   ```
+
+2. **Run the Docker container:**
+   ```bash
+   sudo docker run -p 3112:3112 obs-connection-editor
+   ```
+   The application will be accessible at `http://localhost:3112`.
+
 ## Key Dependencies
 
 The application requires these dependencies (all installed automatically with npm install):
@@ -97,4 +112,4 @@ For the File System Access API to work properly, the application runs in HTTPS m
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.

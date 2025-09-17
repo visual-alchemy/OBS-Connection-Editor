@@ -24,14 +24,14 @@ const localIPs = getLocalIPs()
 console.log("Local IP addresses:", localIPs)
 
 // Create an HTTPS app with express
-const httpsApp = httpsLocalhost()
+const httpsApp = httpsLocalhost({ certNames: localIPs.concat(['localhost']) })
 
 const dev = process.env.NODE_ENV !== "production"
 const app = next({ dev })
 const handle = app.getRequestHandler()
 
 // Define port - use process.env.PORT if available, otherwise default to 3001
-const port = process.env.PORT || 3001
+const port = process.env.PORT || 3112
 
 app.prepare().then(() => {
   // Let Next.js handle all requests
@@ -52,4 +52,3 @@ app.prepare().then(() => {
     console.log("> File System Access API should now work properly")
   })
 })
-

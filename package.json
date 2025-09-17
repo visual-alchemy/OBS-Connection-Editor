@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev -p 3112",
     "dev:https": "node server.js",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3112",
     "start:https": "NODE_ENV=production node server.js",
     "lint": "next lint"
   },
@@ -67,7 +67,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^22.18.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "https-localhost": "^4.7.1",
