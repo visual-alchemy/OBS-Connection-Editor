@@ -24,4 +24,4 @@ RUN apk add --no-cache samba-client
 EXPOSE 3112
 
 # Command to run the application
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start:https"]
