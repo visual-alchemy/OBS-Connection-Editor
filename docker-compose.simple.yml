@@ -1,0 +1,24 @@
+services:
+  obs-connection-editor:
+    build:
+      context: .
+      dockerfile: Dockerfile.simple
+    container_name: obs-connection-editor
+    ports:
+      - "3112:3112"
+    environment:
+      - NODE_ENV=production
+      - SMB_ADDRESS=${SMB_ADDRESS:-192.168.40.145}
+      - SMB_SHARE_NAME=${SMB_SHARE_NAME:-OBS Multi}
+      - SMB_USERNAME=${SMB_USERNAME:-guest}
+      - SMB_PASSWORD=${SMB_PASSWORD:-}
+      - SMB_FILE_PATH=${SMB_FILE_PATH:-src/App.svelte}
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    networks:
+      - obs-network
+
+networks:
+  obs-network:
+    driver: bridge

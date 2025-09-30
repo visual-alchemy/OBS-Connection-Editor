@@ -11,24 +11,60 @@ A web-based tool for managing OBS connections, built with Next.js.
 
 ## Technical Details
 
-- **Server Port**: Runs on port 3001 by default
+- **Server Port**: Runs on port 3112 (Docker) or 3001 (local development)
 - **Real-time Updates**: Combines Server-Sent Events (SSE) for push notifications with regular polling
-- **Secure Context**: Runs in HTTPS mode for better browser compatibility
+- **Secure Context**: Supports both HTTP (Docker) and HTTPS modes for browser compatibility
+- **Docker Support**: Full containerization with SMB client integration
 
-## Installation
+## Installation & Deployment
 
-This repository has been optimized for GitHub upload by excluding npm dependencies. You'll need to install them after cloning:
+### 🐳 Docker Deployment (Recommended)
+
+Docker is the **easiest and most reliable** way to run this application. All dependencies including SMB client are pre-installed.
+
+**Quick Start:**
+```bash
+git clone https://github.com/your-username/OBS-Connection-Editor.git
+cd OBS-Connection-Editor
+cp .env.example .env  # Configure your SMB settings
+docker-compose -f docker-compose.simple.yml up -d
+```
+**→ Access at: http://localhost:3112**
+
+### 💻 Local Development Setup
+
+For development or if you prefer running directly on your system:
+
+**Prerequisites:** Node.js 18+, `smbclient` installed on your system
 
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/OBS-Connection-Editor.git
 cd OBS-Connection-Editor
 
-# Install all dependencies (use --legacy-peer-deps to handle peer dependency conflicts)
+# Install dependencies (use --legacy-peer-deps for compatibility)
 npm install --legacy-peer-deps
 ```
 
-### Potential Installation Issues
+#### System Requirements for Local Development
+
+**macOS:**
+```bash
+# Install smbclient
+brew install samba
+```
+
+**Ubuntu/Debian:**
+```bash
+# Install smbclient
+sudo apt-get update && sudo apt-get install smbclient
+```
+
+**Windows:**
+- Install WSL2 and follow Ubuntu instructions, or
+- Use Docker deployment (recommended for Windows)
+
+#### Potential Installation Issues
 
 If you encounter dependency installation errors, try installing problematic packages individually:
 
@@ -45,43 +81,176 @@ npm install https-localhost --legacy-peer-deps
 
 ## Running the Application
 
-### Development Mode
+### 🐳 Docker (Production Ready)
+
+**Recommended method** - includes all dependencies and SMB client:
 
 ```bash
-# Run the standard development server on port 3001
+# Quick start (HTTP)
+docker-compose -f docker-compose.simple.yml up -d
+
+# With HTTPS support
+docker-compose up -d
+
+# View logs
+docker logs obs-connection-editor -f
+```
+
+**→ Access at: http://localhost:3112**
+
+### 💻 Local Development
+
+**For local development and testing:**
+
+#### Development Mode
+```bash
+# Run the development server on port 3112
 npm run dev
 
-# Or run the development server with HTTPS support
+# Or with HTTPS support
 npm run dev:https
 ```
 
-### Production Mode
+#### Production Mode
 
 ```bash
 # Build the application
 npm run build
 
-# Start the production server
+# Start the production server on port 3112
 npm run start
 
-# Or start the production server with HTTPS
+# Or start with HTTPS
 npm run start:https
 ```
 
-## Running with Docker
+### 🆚 Docker vs Local Development Comparison
 
-To run this project using Docker, follow these steps:
+| Feature | 🐳 Docker | 💻 Local |
+|---------|----------|----------|
+| **Setup Time** | ⚡ 2 minutes | 🕐 5-10 minutes |
+| **Dependencies** | ✅ Pre-installed | ❌ Manual install |
+| **SMB Client** | ✅ Included | ❌ System dependent |
+| **Cross-platform** | ✅ Works everywhere | ❌ OS-specific setup |
+| **Isolation** | ✅ Containerized | ❌ System-wide |
+| **Port** | 3112 | 3112 |
+| **Best For** | Production, Quick start | Development, Debugging |
 
-1. **Build the Docker image:**
+**💡 Recommendation: Use Docker for production and quick testing, local setup for active development.**
+
+## Running with Docker (Recommended)
+
+Docker provides the easiest way to run this application with all dependencies included.
+
+### Quick Start with Docker Compose
+
+1. **Clone the repository:**
    ```bash
-   sudo docker build -t obs-connection-editor .
+   git clone https://github.com/your-username/OBS-Connection-Editor.git
+   cd OBS-Connection-Editor
    ```
 
-2. **Run the Docker container:**
+2. **Configure SMB settings:**
    ```bash
-   sudo docker run -d -p 3112:3112 obs-connection-editor
+   cp .env.example .env
+   # Edit .env with your SMB server details
+   nano .env
    ```
-   The application will be accessible at `http://localhost:3112`.
+
+3. **Run with Docker Compose:**
+   ```bash
+   # Build and run (recommended - stable HTTP version)
+   docker-compose -f docker-compose.simple.yml up -d
+   
+   # OR with HTTPS support (may have certificate issues in some environments)
+   docker-compose up -d
+   ```
+
+4. **Access the application:**
+   - Open your browser to: **http://localhost:3112**
+
+### Docker Configuration Options
+
+#### Option 1: Simple HTTP Deployment (Recommended)
+```bash
+# Uses Dockerfile.simple - most reliable
+docker-compose -f docker-compose.simple.yml up -d
+```
+
+#### Option 2: HTTPS Deployment
+```bash
+# Uses original Dockerfile with HTTPS certificates
+docker-compose up -d
+```
+
+#### Option 3: Manual Docker Build
+```bash
+# Build manually
+docker build -t obs-connection-editor .
+docker run -d -p 3112:3112 --env-file .env obs-connection-editor
+```
+
+### Environment Variables (.env file)
+
+Create a `.env` file with your SMB server configuration:
+
+```env
+# SMB Server Configuration
+SMB_ADDRESS=192.168.40.145
+SMB_SHARE_NAME=OBS Multi
+SMB_USERNAME=guest
+SMB_PASSWORD=
+SMB_FILE_PATH=src/App.svelte
+
+# Application Configuration
+NODE_ENV=production
+PORT=3112
+```
+
+### Docker Management Commands
+
+```bash
+# Check container status
+docker ps | grep obs
+
+# View application logs
+docker logs obs-connection-editor -f
+
+# Restart the container
+docker-compose -f docker-compose.simple.yml restart
+
+# Stop and remove
+docker-compose -f docker-compose.simple.yml down
+
+# Rebuild after code changes
+docker-compose -f docker-compose.simple.yml up --build
+```
+
+### Troubleshooting Docker Issues
+
+**Container won't start:**
+```bash
+docker logs obs-connection-editor
+```
+
+**SMB connection issues:**
+```bash
+# Test SMB connectivity from container
+docker exec -it obs-connection-editor smbclient -L 192.168.40.145 -U guest%
+
+# Check API endpoint
+curl http://localhost:3112/api/check-smb
+```
+
+**Port already in use:**
+```bash
+# Check what's using port 3112
+lsof -i :3112
+
+# Or modify docker-compose.simple.yml to use different port:
+ports:
+  - "3113:3112"  # Use port 3113 instead
+```
 
 ## Key Dependencies
 
