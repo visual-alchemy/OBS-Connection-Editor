@@ -1,198 +1,92 @@
 # OBS Connection Editor
 
-A web-based tool for managing OBS connections, built with Next.js.
+A web-based tool for managing OBS connections, built with Next.js and Docker support.
 
-## Features
+## ✨ Features
 
-- **SMB Integration**: Directly loads and saves files from `smb://192.168.40.145/OBS Multi/src/App.svelte`
-- **Real-time Updates**: Webhook system that shows real-time changes to Svelte files
-- **Connection Management**: Add, edit, delete, and toggle visibility of OBS connections
-- **Filtering & Search**: Filter connections by category and search by name or address
+- **SMB Integration**: Direct file management on SMB shares (`//192.168.40.145/OBS Multi/src/App.svelte`)
+- **Real-time Updates**: Live file change notifications via Server-Sent Events
+- **Connection Management**: Add, edit, delete, and toggle OBS connections
+- **Filtering & Search**: Find connections by category, name, or address
+- **Docker Ready**: Full containerization with SMB client included
 
-## Technical Details
+---
 
-- **Server Port**: Runs on port 3112 (Docker) or 3001 (local development)
-- **Real-time Updates**: Combines Server-Sent Events (SSE) for push notifications with regular polling
-- **Secure Context**: Supports both HTTP (Docker) and HTTPS modes for browser compatibility
-- **Docker Support**: Full containerization with SMB client integration
+## 🚀 Quick Start
 
-## Installation & Deployment
+### 🐳 Docker Installation (Recommended)
 
-### 🐳 Docker Deployment (Recommended)
+**One-command setup with all dependencies included:**
 
-Docker is the **easiest and most reliable** way to run this application. All dependencies including SMB client are pre-installed.
-
-**Quick Start:**
 ```bash
-git clone https://github.com/your-username/OBS-Connection-Editor.git
+git clone https://github.com/visual-alchemy/OBS-Connection-Editor.git
 cd OBS-Connection-Editor
-cp .env.example .env  # Configure your SMB settings
+cp .env.example .env  # Edit SMB settings
 docker-compose -f docker-compose.simple.yml up -d
 ```
+
 **→ Access at: http://localhost:3112**
 
-### 💻 Local Development Setup
+### 💻 Manual Installation
 
-For development or if you prefer running directly on your system:
-
-**Prerequisites:** Node.js 18+, `smbclient` installed on your system
+**Prerequisites:** Node.js 18+, SMB client installed
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/OBS-Connection-Editor.git
+git clone https://github.com/visual-alchemy/OBS-Connection-Editor.git
 cd OBS-Connection-Editor
-
-# Install dependencies (use --legacy-peer-deps for compatibility)
 npm install --legacy-peer-deps
-```
-
-#### System Requirements for Local Development
-
-**macOS:**
-```bash
-# Install smbclient
-brew install samba
-```
-
-**Ubuntu/Debian:**
-```bash
-# Install smbclient
-sudo apt-get update && sudo apt-get install smbclient
-```
-
-**Windows:**
-- Install WSL2 and follow Ubuntu instructions, or
-- Use Docker deployment (recommended for Windows)
-
-#### Potential Installation Issues
-
-If you encounter dependency installation errors, try installing problematic packages individually:
-
-```bash
-# For SMB file access
-npm install @marsaud/smb2 --legacy-peer-deps
-
-# For WebSocket support
-npm install ws --legacy-peer-deps
-
-# For HTTPS local development
-npm install https-localhost --legacy-peer-deps
-```
-
-## Running the Application
-
-### 🐳 Docker (Production Ready)
-
-**Recommended method** - includes all dependencies and SMB client:
-
-```bash
-# Quick start (HTTP)
-docker-compose -f docker-compose.simple.yml up -d
-
-# With HTTPS support
-docker-compose up -d
-
-# View logs
-docker logs obs-connection-editor -f
+npm run dev
 ```
 
 **→ Access at: http://localhost:3112**
 
-### 💻 Local Development
+---
 
-**For local development and testing:**
+## 📦 Installation Options
 
-#### Development Mode
-```bash
-# Run the development server on port 3112
-npm run dev
+### Option 1: Docker (Recommended)
 
-# Or with HTTPS support
-npm run dev:https
-```
-
-#### Production Mode
+**Why Docker?** ✅ Pre-configured ✅ Cross-platform ✅ No dependencies
 
 ```bash
-# Build the application
-npm run build
-
-# Start the production server on port 3112
-npm run start
-
-# Or start with HTTPS
-npm run start:https
-```
-
-### 🆚 Docker vs Local Development Comparison
-
-| Feature | 🐳 Docker | 💻 Local |
-|---------|----------|----------|
-| **Setup Time** | ⚡ 2 minutes | 🕐 5-10 minutes |
-| **Dependencies** | ✅ Pre-installed | ❌ Manual install |
-| **SMB Client** | ✅ Included | ❌ System dependent |
-| **Cross-platform** | ✅ Works everywhere | ❌ OS-specific setup |
-| **Isolation** | ✅ Containerized | ❌ System-wide |
-| **Port** | 3112 | 3112 |
-| **Best For** | Production, Quick start | Development, Debugging |
-
-**💡 Recommendation: Use Docker for production and quick testing, local setup for active development.**
-
-## Running with Docker (Recommended)
-
-Docker provides the easiest way to run this application with all dependencies included.
-
-### Quick Start with Docker Compose
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/OBS-Connection-Editor.git
-   cd OBS-Connection-Editor
-   ```
-
-2. **Configure SMB settings:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your SMB server details
-   nano .env
-   ```
-
-3. **Run with Docker Compose:**
-   ```bash
-   # Build and run (recommended - stable HTTP version)
-   docker-compose -f docker-compose.simple.yml up -d
-   
-   # OR with HTTPS support (may have certificate issues in some environments)
-   docker-compose up -d
-   ```
-
-4. **Access the application:**
-   - Open your browser to: **http://localhost:3112**
-
-### Docker Configuration Options
-
-#### Option 1: Simple HTTP Deployment (Recommended)
-```bash
-# Uses Dockerfile.simple - most reliable
+# Simple HTTP deployment (most reliable)
 docker-compose -f docker-compose.simple.yml up -d
-```
 
-#### Option 2: HTTPS Deployment
-```bash
-# Uses original Dockerfile with HTTPS certificates
+# HTTPS deployment (with certificates)
 docker-compose up -d
+
+# Manual Docker build
+docker build -t obs-connection-editor . && docker run -d -p 3112:3112 obs-connection-editor
 ```
 
-#### Option 3: Manual Docker Build
+### Option 2: Manual Setup
+
+**System Requirements:**
+
+| OS | Install SMB Client |
+|----|-------------------|
+| **macOS** | `brew install samba` |
+| **Ubuntu/Debian** | `sudo apt install smbclient` |
+| **Windows** | Use WSL2 or Docker (recommended) |
+
+**Installation:**
 ```bash
-# Build manually
-docker build -t obs-connection-editor .
-docker run -d -p 3112:3112 --env-file .env obs-connection-editor
+npm install --legacy-peer-deps
+npm run build  # Production
+npm run dev    # Development
 ```
 
-### Environment Variables (.env file)
+---
 
-Create a `.env` file with your SMB server configuration:
+## ⚙️ Configuration
+
+### Environment Variables
+
+Create `.env` file from template:
+
+```bash
+cp .env.example .env
+```
 
 ```env
 # SMB Server Configuration
@@ -201,84 +95,124 @@ SMB_SHARE_NAME=OBS Multi
 SMB_USERNAME=guest
 SMB_PASSWORD=
 SMB_FILE_PATH=src/App.svelte
-
-# Application Configuration
-NODE_ENV=production
-PORT=3112
 ```
 
-### Docker Management Commands
+### Port Configuration
+
+- **Docker**: Always uses port 3112
+- **Local**: Configurable via `package.json` scripts (default 3112)
+
+---
+
+## 🔧 Management Commands
+
+### Docker Commands
 
 ```bash
-# Check container status
-docker ps | grep obs
+# Container management
+docker ps | grep obs                                    # Check status
+docker logs obs-connection-editor -f                   # View logs
+docker-compose -f docker-compose.simple.yml restart    # Restart
+docker-compose -f docker-compose.simple.yml down       # Stop
 
-# View application logs
-docker logs obs-connection-editor -f
-
-# Restart the container
-docker-compose -f docker-compose.simple.yml restart
-
-# Stop and remove
-docker-compose -f docker-compose.simple.yml down
-
-# Rebuild after code changes
+# Rebuild after changes
 docker-compose -f docker-compose.simple.yml up --build
 ```
 
-### Troubleshooting Docker Issues
+### Local Development
+
+```bash
+npm run dev         # Development server
+npm run build       # Production build
+npm run start       # Production server
+npm run dev:https   # HTTPS development
+npm run start:https # HTTPS production
+```
+
+---
+
+## 🆚 Deployment Comparison
+
+| Feature | 🐳 Docker | 💻 Manual |
+|---------|-----------|-----------|
+| **Setup Time** | ⚡ 2 minutes | 🕐 5-10 minutes |
+| **Dependencies** | ✅ Included | ❌ Manual install |
+| **Cross-platform** | ✅ Universal | ❌ OS-dependent |
+| **SMB Client** | ✅ Pre-installed | ❌ System setup |
+| **Isolation** | ✅ Containerized | ❌ System-wide |
+| **Best For** | Production, Testing | Development |
+
+**💡 Recommendation: Docker for production, manual for active development**
+
+---
+
+## 🐛 Troubleshooting
+
+### Common Issues
 
 **Container won't start:**
 ```bash
 docker logs obs-connection-editor
 ```
 
-**SMB connection issues:**
+**SMB connection failed:**
 ```bash
-# Test SMB connectivity from container
+# Test from container
 docker exec -it obs-connection-editor smbclient -L 192.168.40.145 -U guest%
 
-# Check API endpoint
+# Test API endpoint
 curl http://localhost:3112/api/check-smb
 ```
 
-**Port already in use:**
+**Port 3112 already in use:**
 ```bash
-# Check what's using port 3112
-lsof -i :3112
+lsof -i :3112  # Find what's using the port
 
-# Or modify docker-compose.simple.yml to use different port:
+# Or use different port in docker-compose:
 ports:
-  - "3113:3112"  # Use port 3113 instead
+  - "3113:3112"  # Use 3113 instead
 ```
 
-## Key Dependencies
+**Dependency issues (manual install):**
+```bash
+npm install @marsaud/smb2 --legacy-peer-deps
+npm install https-localhost --legacy-peer-deps
+```
 
-The application requires these dependencies (all installed automatically with npm install):
+---
 
-- **Next.js 15.1.0**: Framework for server-rendered React applications
-- **React 19**: UI library
-- **@marsaud/smb2**: For SMB file system integration
-- **next-themes**: For theme management
-- **https-localhost**: For HTTPS support in local development
+## 🏗️ Architecture
 
-## Implementation Notes
+### Technical Stack
+- **Framework**: Next.js 15.1.0 + React 19
+- **Styling**: Tailwind CSS + Radix UI
+- **File System**: SMB client integration
+- **Real-time**: Server-Sent Events + Polling
+- **Container**: Docker + Alpine Linux
+
+### API Endpoints
+- `/api/check-smb` - SMB connectivity test
+- `/api/read-file` - Read SMB file content
+- `/api/save-file` - Save file to SMB share
+- `/api/poll-updates` - File change detection
+- `/api/webhook` - Real-time notifications
 
 ### SMB Integration
+- **Target**: `//192.168.40.145/OBS Multi/src/App.svelte`
+- **Method**: `smbclient` command-line tool
+- **Auth**: Guest access (configurable via .env)
+- **Updates**: Real-time via SSE + 5-second polling
 
-The application connects to an SMB share at `//192.168.40.145/OBS Multi` to read and write the `src/App.svelte` file.
+---
 
-### Real-time Updates
+## 📄 License
 
-The system uses two mechanisms for real-time updates:
+MIT License - see LICENSE file for details.
 
-1. **Webhook System**: A Server-Sent Events (SSE) endpoint at `/api/webhook` that clients connect to for receiving push notifications
-2. **Regular Polling**: A polling mechanism checks for file changes every 5 seconds by fetching `/api/poll-updates`
+---
 
-### Security
+## 🔗 Links
 
-For the File System Access API to work properly, the application runs in HTTPS mode using a local certificate.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- **Repository**: https://github.com/visual-alchemy/OBS-Connection-Editor
+- **Docker Hub**: _(Coming soon)_
+- **Documentation**: See `DOCKER_DEPLOYMENT.md` for advanced Docker configuration
