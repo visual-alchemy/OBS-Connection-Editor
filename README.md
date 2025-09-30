@@ -79,7 +79,7 @@ To run this project using Docker, follow these steps:
 
 2. **Run the Docker container:**
    ```bash
-   sudo docker run -p 3112:3112 obs-connection-editor
+   sudo docker run -d -p 3112:3112 obs-connection-editor
    ```
    The application will be accessible at `http://localhost:3112`.
 
